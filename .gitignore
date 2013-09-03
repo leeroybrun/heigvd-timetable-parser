@@ -1,3 +1,7 @@
+# Virtualenv
+ENV/
+*.xls
+
 *.py[cod]
 
 # C extensions
