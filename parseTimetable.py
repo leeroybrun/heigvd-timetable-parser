@@ -3,7 +3,7 @@ import datetime
 import math
 
 import xlrd
-from icalendar import Calendar, Event
+from icalendar import Calendar, Event, LocalTimezone
 
 # LINKS :
 #  - Save to .ics : http://icalendar.readthedocs.org/en/latest/
@@ -134,9 +134,14 @@ class Timetable:
 ###########################################################
 # TODO: add method
 # TODO: initiate ics on init method
-class Ics:
+class iCalendar:
 	def __init__(self, file):
 		self.file = file
+		self.cal = Calendar()
+
+		self.cal.add('version', '2.0')
+		self.cal.add('prodid', '-//Leeroy Brun - HEIG-VD//mxm.dk//')
+
 
 	def add(self, summary, dateStart, dateEnd):
 		print 'add date to ics'
