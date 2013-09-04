@@ -28,8 +28,6 @@ class iCalendar:
 	def add(self, dateStart, dateEnd, summary, location='', description='', categories=''):
 		event = Event()
 
-		print categories
-
 		event.add('summary', summary)
 		event.add('location', location)
 		event.add('categories', categories, encode=0)

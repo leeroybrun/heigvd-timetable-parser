@@ -142,7 +142,18 @@ class Timetable:
 		# Get course data (name, teacher, location)
 		course['name'] = self.sh.cell_value(rowNum, colNum)
 		course['teacher'] = self.sh.cell_value(rowNum+1, colNum)
-		course['location'] = self.sh.cell_value(rowNum+2, colNum)
+
+		if self.isCellEmpty(rowNum+2, colNum) == False:
+			course['location'] = self.sh.cell_value(rowNum+2, colNum)
+		# If location not defined, get location of first course for the day
+		else:
+			course['location'] = self.sh.cell_value(rowNum+2, dayStartCol)
+
+			# Location not found, loop on each cols of the day to find one
+			locCol = dayStartCol
+			while (course['location'] == '' or course['location'] == ' ') and locCol < maxDayCol:
+				course['location'] = self.sh.cell_value(rowNum+2, locCol)
+				locCol += 1
 
 		# Loop over next cells to find the end of the course
 		colNum += 1
