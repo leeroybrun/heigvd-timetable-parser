@@ -35,20 +35,41 @@ START_COL = 2      # Start column of data
 HOURS_ROW = 2      # Row containing hours
 START_ROW = 3      # Start row of data
 WEEK_ROWS = 3      # Number of rows per week
-NB_DAYS = 6
+NB_DAYS = 6        # Number of days per week
 
+
+###########################################################
+# Cells "types" (course, exam, free, test, test_exam)
+###########################################################
+CELLS_TYPES = [
+	'course',
+	'test',
+	'exam',
+	'test_exam',
+	'free'
+]
 
 ###########################################################
 # Timetable class
 ###########################################################
 
 class Timetable:
-	def __init__(self, file):
+	def __init__(self, file, typeFilter=''):
 		self.file = file
 
-		path, ext = os.path.splitext(file)
+		# Get output file name
+		outputPath, ext = os.path.splitext(file)
 
-		self.ics = iCalendar(path+'.ics')
+		# If this is a valid type
+		if typeFilter in CELLS_TYPES:
+			self.typeFilter = typeFilter
+			outputPath += '_'+ self.typeFilter
+		else:
+			self.typeFilter = ''
+
+		self.outputPath = outputPath+'.ics'
+
+		self.ics = iCalendar(self.outputPath)
 
 	#------------------------------------------------------
 	# Main methods
@@ -66,8 +87,9 @@ class Timetable:
 		for rowNum in range(START_ROW, self.sh.nrows, WEEK_ROWS):
 			self.parseWeek(rowNum)
 
-		print 'Timetable file parsed, saving to ics...'
+		print 'Timetable file parsed, saving to "'+ self.outputPath +'"...'
 		self.ics.save()
+		print 'Done !'
 
 	# Parse rows of XLS file (which in fact is a week)
 	def parseWeek(self, rowNum):
@@ -98,7 +120,7 @@ class Timetable:
 
 	def parseDay(self, rowNum, startColNum, dayDate):
 		# Check if first day cell has color of "vacation" day
-		if self.cellTypeByColor(rowNum, startColNum) == 'free':
+		if self.cellTypeByColor(rowNum, startColNum) == CELLS_TYPES[4] and self.isExportable(CELLS_TYPES[4]) == True:
 			self.ics.add(dayDate, dayDate + datetime.timedelta(days=1), "HEIG-VD: Congé")
 			return;
 
@@ -123,13 +145,13 @@ class Timetable:
 
 		# Determine the course type
 		cellTypeByColor = self.cellTypeByColor(rowNum, colNum)
-		if cellTypeByColor == 'free':
+		if cellTypeByColor == CELLS_TYPES[4]:
 			course['type'] = 'Congé'
-		elif cellTypeByColor == 'test':
+		elif cellTypeByColor == CELLS_TYPES[1]:
 			course['type'] = 'Test'
-		elif cellTypeByColor == 'exam':
+		elif cellTypeByColor == CELLS_TYPES[2]:
 			course['type'] = 'Examen'
-		elif cellTypeByColor == 'test_exam':
+		elif cellTypeByColor == CELLS_TYPES[3]:
 			course['type'] = 'Test & Examen'
 		else:
 			course['type'] = 'Cours'
@@ -187,7 +209,9 @@ class Timetable:
 			'location': 'HEIG-VD '+ course['location']
 		}
 
-		self.ics.add(course['startDate'], course['endDate'], tmp['summary'], location=tmp['location'], description=tmp['teacher'], categories=tmp['categories'])
+		# Export only if event correspond to the global filter (second program param)
+		if self.isExportable(cellTypeByColor) == True:
+			self.ics.add(course['startDate'], course['endDate'], tmp['summary'], location=tmp['location'], description=tmp['teacher'], categories=tmp['categories'])
 
 		# Return the next cell to be processed by the parseDay loop
 		return colNum+1
@@ -235,13 +259,19 @@ class Timetable:
 		cellColor = str(self.cellXf(row, col).background.pattern_colour_index)
 
 		knownCellColors = {
-			'47': 'test',
-			'41': 'exam',
-			'46': 'test_exam',
-			'22': 'free'
+			'47': CELLS_TYPES[1],
+			'41': CELLS_TYPES[2],
+			'46': CELLS_TYPES[3],
+			'22': CELLS_TYPES[4]
 		}
 
 		if cellColor in knownCellColors:
 			return knownCellColors[cellColor]
 		else:
-			return 'unknown'
+			return CELLS_TYPES[0]
+
+	def isExportable(self, cellType):
+		if self.typeFilter == cellType or self.typeFilter == '':
+			return True
+		else:
+			return False
