@@ -25,11 +25,12 @@ class iCalendar:
 		self.cal.add('version', '2.0')
 		self.cal.add('prodid', '-//Leeroy Brun - HEIG-VD//Timetable Parser//')
 
-	def add(self, dateStart, dateEnd, summary, location='', description=''):
+	def add(self, dateStart, dateEnd, summary, location='', description='', categories=''):
 		event = Event()
 
 		event.add('summary', summary)
 		event.add('location', location)
+		event.add('categories', categories)
 		event.add('description', description)
 		event.add('dtstart', dateStart)
 		event.add('dtend', dateEnd)

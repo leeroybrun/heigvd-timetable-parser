@@ -3,6 +3,7 @@
 
 import datetime
 import math
+import os
 
 import xlrd
 from iCalendar import iCalendar
@@ -45,7 +46,9 @@ class Timetable:
 	def __init__(self, file):
 		self.file = file
 
-		self.ics = iCalendar('events.ics')
+		path, ext = os.path.splitext(file)
+
+		self.ics = iCalendar(path+'.ics')
 
 	#------------------------------------------------------
 	# Main methods
@@ -56,17 +59,18 @@ class Timetable:
 		self.wb = xlrd.open_workbook(self.file, formatting_info=True)
 		self.sh = self.wb.sheet_by_index(0)
 
+		print 'Parsing timetable file, please wait...'
+
 		self.parseHours(HOURS_ROW)
 
 		for rowNum in range(START_ROW, self.sh.nrows, WEEK_ROWS):
 			self.parseWeek(rowNum)
 
+		print 'Timetable file parsed, saving to ics...'
 		self.ics.save()
 
 	# Parse rows of XLS file (which in fact is a week)
 	def parseWeek(self, rowNum):
-		print 'parseRow ', rowNum
-
 		sh = self.sh
 		wb = self.wb
 
@@ -105,7 +109,7 @@ class Timetable:
 		courseCol = startColNum
 		while courseCol < startColNum+len(self.hours):
 			# Empty cell ? Skip it.
-			if(self.isCellEmpty(rowNum, courseCol) == True):
+			if self.isCellEmpty(rowNum, courseCol) == True or self.sh.cell_value(rowNum, courseCol) == ' ':
 				courseCol += 1
 			# Cell not empty, it's a course -> parse it and get the next col to check (last col of parsed course + 1)
 			else:
@@ -144,16 +148,16 @@ class Timetable:
 		colNum += 1
 		endFound = False
 		while endFound != True and colNum < maxDayCol:
-			cellXf = self.cellXf(rowNum, colNum)
-
-			if cellXf.border.right_line_style == 7:
-				endFound = True
-			else:
+			if self.isCellEmpty(rowNum, colNum):
+				# Cell is empty, go to the next one
 				colNum += 1
+			else:
+				# Cell not empty, it's a new course, so this is the end
+				endFound = True
+				colNum -= 1 # This course's end correspond to the cell before the current cell
 
 		# End found, use it
 		if endFound == True:
-			print rowNum, ":", colNum
 			lastPeriodInDay = colNum - dayStartCol
 		# End not found, the end is the last time of the day
 		else:
@@ -167,10 +171,12 @@ class Timetable:
 
 		tmp = {
 			'summary': "HEIG-VD: "+ course['name'] +" ("+ course['type'] +")",
-			'teacher': "Professeur : "+ course['teacher']
-		} 
+			'teacher': "Prof. : "+ course['teacher'],
+			'categories': "HEIG-VD"+ chr(44) + course['type'],
+			'location': 'HEIG-VD '+ course['location']
+		}
 
-		self.ics.add(course['startDate'], course['endDate'], tmp['summary'], course['location'], tmp['teacher'])
+		self.ics.add(course['startDate'], course['endDate'], tmp['summary'], location=tmp['location'], description=tmp['teacher'], categories=tmp['categories'])
 
 		# Return the next cell to be processed by the parseDay loop
 		return colNum+1
@@ -186,7 +192,7 @@ class Timetable:
 		self.hours = []
 
 		while emptyCells != 2:
-			if self.isCellEmpty(rowNum, colNum) == True:
+			if self.isCellEmpty(rowNum, colNum) == True or self.sh.cell_value(rowNum, colNum) == ' ':
 				emptyCells += 1
 			else:
 				hourFloat = sh.cell_value(rowNum, colNum) * 24
@@ -209,7 +215,7 @@ class Timetable:
 
 	def isCellEmpty(self, row, col):
 		cellType = self.sh.cell_type(row, col)
-		if cellType == 0 or cellType == 6 or self.sh.cell_value(row, col) == ' ':
+		if cellType == 0 or cellType == 6:
 			return True
 		else:
 			return False
