@@ -1,6 +1,7 @@
 # Virtualenv
 ENV/
 *.xls
+*.ics
 
 *.py[cod]
 
