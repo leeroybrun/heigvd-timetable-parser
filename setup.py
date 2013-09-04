@@ -9,8 +9,8 @@ setup(
     # metadata for upload to PyPI
     author = "Leeroy Brun",
     author_email = "leeroy.brun@gmail.com",
-    #description = "Tool used to remove all archives stored inside an Amazon Glacier vault.",
-   # license = "MIT",
-    #keywords = "aws amazon glacier boto archives vaults",
-    #url = "https://github.com/leeroybrun/glacier-vault-remove", 
+    description = "Transforme un horaire au format XLS provenant de l'intranet du département FEE de la HEIG-VD en un fichier ICS.",
+    license = "MIT",
+    keywords = "heig-vd ics xls fee",
+    url = "https://github.com/leeroybrun/heigvd-timetable-parser", 
 )
