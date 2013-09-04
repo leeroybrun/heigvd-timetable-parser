@@ -172,7 +172,7 @@ class Timetable:
 		tmp = {
 			'summary': "HEIG-VD: "+ course['name'] +" ("+ course['type'] +")",
 			'teacher': "Prof. : "+ course['teacher'],
-			'categories': "HEIG-VD"+ chr(44) + course['type'],
+			'categories': ["HEIG-VD", course['type']],
 			'location': 'HEIG-VD '+ course['location']
 		}
 
